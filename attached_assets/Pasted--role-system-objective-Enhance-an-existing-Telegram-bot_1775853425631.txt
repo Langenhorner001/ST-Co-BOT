@@ -1,0 +1,140 @@
+{
+  "role": "system",
+  "objective": "Enhance an existing Telegram bot by implementing a .scr command that scrapes allowed public content from Telegram channels/groups and returns structured, non-sensitive data with high performance and clean UX.",
+
+  "constraints": {
+    "allowed": [
+      "Public channels/groups only",
+      "Non-sensitive content (text, links, usernames, metadata)"
+    ],
+    "disallowed": [
+      "Extraction or processing of sensitive financial or personal data",
+      "Bypassing platform protections or restrictions"
+    ]
+  },
+
+  "command_design": {
+    ".scr": {
+      "usage": ".scr <link> <quantity>",
+      "description": "Scrape recent messages from a public Telegram channel/group and return structured data",
+      "examples": [
+        ".scr https://t.me/examplechannel 20"
+      ]
+    }
+  },
+
+  "input_handling": [
+    "Validate Telegram link format",
+    "Ensure quantity is numeric and within limits (e.g., 1–100)",
+    "Handle missing arguments with helpful usage message",
+    "Reject private/inaccessible links gracefully"
+  ],
+
+  "scraper_engine": {
+    "approach": [
+      "Use official Telegram APIs/libraries where possible",
+      "Fallback to HTML parsing only for public pages if API unavailable",
+      "Respect rate limits and platform policies"
+    ],
+    "data_extraction": [
+      "message_text",
+      "message_id",
+      "timestamp",
+      "author (if available)",
+      "links within message"
+    ],
+    "filtering": [
+      "Remove duplicates",
+      "Trim whitespace",
+      "Optional keyword filtering (future-ready)"
+    ]
+  },
+
+  "performance_optimization": [
+    "Use async/await for network calls",
+    "Batch fetch messages where possible",
+    "Limit concurrency to safe levels",
+    "Add timeout handling",
+    "Cache recent results for repeated requests"
+  ],
+
+  "architecture": {
+    "structure": [
+      "handlers/scr_handler.py",
+      "services/scraper_service.py",
+      "utils/parser.py",
+      "utils/validator.py",
+      "utils/formatter.py"
+    ],
+    "principles": [
+      "Thin handlers (Telegram interaction only)",
+      "Scraper logic in service layer",
+      "Reusable utilities",
+      "No duplicated logic"
+    ]
+  },
+
+  "auto_ui_system": {
+    "description": "Responses must be auto-formatted without manual formatting calls",
+    "rules": [
+      "Handlers return raw structured data",
+      "System auto-detects response type (single/batch/error)",
+      "Apply consistent UI templates automatically"
+    ]
+  },
+
+  "response_design": {
+    "success": [
+      "📡 SCRAPE COMPLETE",
+      "──────────",
+      "🔗 Source: <link>",
+      "📊 Fetched: X messages",
+      "──────────",
+      "📝 Sample:",
+      "1. <short preview>",
+      "2. <short preview>",
+      "──────────",
+      "⏱ Time: Xs"
+    ],
+    "error": [
+      "❌ SCRAPE FAILED",
+      "──────────",
+      "Reason: <error>",
+      "Tip: Check link or quantity"
+    ]
+  },
+
+  "advanced_features": [
+    "Rate limiting per user",
+    "Retry failed fetches (max 2 attempts)",
+    "Progress feedback for larger quantities",
+    "Execution time tracking",
+    "Optional keyword filter parameter (future)"
+  ],
+
+  "security": [
+    "Sanitize all inputs",
+    "Do not log sensitive user data",
+    "Respect Telegram terms and privacy",
+    "Prevent abuse via limits"
+  ],
+
+  "scalability": [
+    "Design for future commands (e.g., filters, exports)",
+    "Keep scraper modular",
+    "Allow easy integration of database or caching layer"
+  ],
+
+  "expected_result": {
+    "before": "Basic or unsafe scraping idea",
+    "after": "Clean, compliant, high-performance scraper system"
+  },
+
+  "instructions": [
+    "Act like a senior backend engineer",
+    "Focus on compliance and safety",
+    "Optimize performance and structure",
+    "Ensure clean, maintainable code",
+    "Ensure smooth execution on Replit"
+  ]
+}

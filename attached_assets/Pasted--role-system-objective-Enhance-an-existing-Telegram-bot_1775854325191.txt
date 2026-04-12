@@ -1,0 +1,137 @@
+{
+  "role": "system",
+  "objective": "Enhance an existing Telegram bot scraper to efficiently fetch, clean, and format structured data from public Telegram channels using the .scr command.",
+
+  "command_design": {
+    ".scr": {
+      "usage": ".scr <link> <quantity>",
+      "description": "Fetch and return a specified number of cleaned entries from a public Telegram channel/group"
+    }
+  },
+
+  "input_handling": [
+    "Validate Telegram link format",
+    "Ensure quantity is numeric and within limits (1–100)",
+    "Handle missing or invalid input with helpful message",
+    "Reject inaccessible/private links gracefully"
+  ],
+
+  "scraper_enhancement": {
+    "goals": [
+      "Extract structured entries from messages",
+      "Clean and normalize extracted data",
+      "Return exactly requested quantity if available"
+    ],
+
+    "steps": [
+      "Fetch recent messages from channel",
+      "Parse message content",
+      "Extract relevant structured patterns (non-sensitive data only)",
+      "Normalize format (trim, standardize spacing)",
+      "Remove duplicates",
+      "Stop when required quantity is reached"
+    ]
+  },
+
+  "data_cleaning": [
+    "Remove empty or invalid entries",
+    "Normalize spacing and separators",
+    "Ensure consistent format across all results",
+    "Deduplicate entries",
+    "Validate structure before including in output"
+  ],
+
+  "performance_optimization": [
+    "Use async/await for scraping",
+    "Batch fetch messages",
+    "Stop early once quantity reached",
+    "Cache results for repeated requests",
+    "Avoid unnecessary re-fetching"
+  ],
+
+  "architecture": {
+    "structure": [
+      "handlers/scr_handler.py",
+      "services/scraper_service.py",
+      "services/cleaner.py",
+      "utils/parser.py",
+      "utils/formatter.py"
+    ],
+    "principles": [
+      "Thin handlers",
+      "Scraper logic in service layer",
+      "Dedicated cleaning module",
+      "Reusable utilities"
+    ]
+  },
+
+  "auto_ui_system": {
+    "description": "Automatically format output without manual calls",
+    "rules": [
+      "Handler returns raw cleaned list",
+      "System auto-detects batch response",
+      "Apply consistent UI formatting"
+    ]
+  },
+
+  "response_design": {
+    "success": [
+      "📡 SCRAPE SUCCESS",
+      "──────────",
+      "🔗 Source: <link>",
+      "📊 Collected: X items",
+      "──────────",
+      "📄 Clean Results:",
+      "1. <item>",
+      "2. <item>",
+      "...",
+      "──────────",
+      "⏱ Time: Xs"
+    ],
+    "empty": [
+      "⚠️ NO DATA FOUND",
+      "──────────",
+      "Try different source or increase limit"
+    ],
+    "error": [
+      "❌ SCRAPE FAILED",
+      "──────────",
+      "Reason: <error>",
+      "Tip: Check link format"
+    ]
+  },
+
+  "advanced_features": [
+    "Rate limiting per user",
+    "Retry failed fetch (2 attempts)",
+    "Execution time tracking",
+    "Optional keyword filter parameter (future)",
+    "Optional export (txt/csv)"
+  ],
+
+  "security": [
+    "Sanitize inputs",
+    "Do not process sensitive data",
+    "Respect platform policies",
+    "Prevent abuse via limits"
+  ],
+
+  "scalability": [
+    "Allow future filters (keywords, dates)",
+    "Prepare for database caching",
+    "Keep scraper modular for reuse"
+  ],
+
+  "expected_result": {
+    "before": "Basic scraper with messy output",
+    "after": "Clean, fast, structured scraper with premium UX"
+  },
+
+  "instructions": [
+    "Act like a senior backend engineer",
+    "Focus on clean architecture",
+    "Optimize for speed and efficiency",
+    "Ensure consistent output format",
+    "Ensure safe and compliant implementation"
+  ]
+}
