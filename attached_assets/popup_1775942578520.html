@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OP Extension</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <img src="op_logo.png" alt="OP Logo" class="logo-img">
+      <div class="title">
+        <h1>OP Extension</h1>
+        <span class="subtitle">@op_limitedbot</span>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="enabledToggle" checked>
+        <span class="slider"></span>
+      </label>
+    </header>
+    
+    <div class="stats">
+      <div class="stat-card">
+        <span class="stat-value" id="totalCount">0</span>
+        <span class="stat-label">Total</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" id="pkCount">0</span>
+        <span class="stat-label">PK Live</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" id="secretCount">0</span>
+        <span class="stat-label">Secrets</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" id="pmCount">0</span>
+        <span class="stat-label">PM</span>
+      </div>
+    </div>
+    
+    <div class="status-bar" id="statusBar">
+      <span class="status-dot active"></span>
+      <span id="statusText">Monitoring Active</span>
+    </div>
+    
+    <div class="section">
+      <h2>Detected Keys</h2>
+      <div class="keys-list" id="keysList">
+        <div class="empty-state">
+          <p>No keys detected yet</p>
+          <span>Browse websites with Stripe payments</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section telegram-section">
+      <h2>Telegram Bot</h2>
+      <div class="telegram-info">
+        <span class="bot-id">@op_limitedbot</span>
+        <a href="https://t.me/op_limitedbot" target="_blank" class="btn btn-telegram">
+          Open Bot
+        </a>
+      </div>
+    </div>
+    
+    <div class="actions">
+      <button class="btn btn-secondary" id="clearBtn">Clear All</button>
+      <button class="btn btn-primary" id="exportBtn">Export JSON</button>
+    </div>
+    
+    <footer class="footer">
+      <span>OP Extension v1.0.0</span>
+    </footer>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

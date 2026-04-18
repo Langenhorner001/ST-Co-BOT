@@ -1,0 +1,302 @@
+import requests
+from user_agent import generate_user_agent
+import time
+import os
+import random
+import threading
+from concurrent.futures import ThreadPoolExecutor
+
+# ========== CREDITS ==========
+# Tool developed by @Antyrx
+# Telegram: t.me/Antyrx
+# Version: OP Edition
+
+# ========== CONFIGURATION ==========
+THREADS = 15                # Number of concurrent report threads (increase for more power)
+TOTAL_REPORTS = 100000      # How many reports to send (set insane number)
+DELAY_BETWEEN = (0.2, 0.8)  # Random seconds between reports (very aggressive)
+USE_PROXY = False           # Set True if you have proxies
+PROXY_LIST = []             # Add your proxies here
+
+# ========== COLORS ==========
+class Colors:
+    CYAN = '\033[96m'
+    WHITE = '\033[97m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    RED = '\033[91m'
+    RESET = '\033[0m'
+
+def print_banner():
+    os.system('clear' if os.name == 'posix' else 'cls')
+    print(f"{Colors.CYAN}{Colors.WHITE}            Instagram Mass Report Tool - @Antyrx           {Colors.CYAN}")
+    print(f"{Colors.CYAN}{Colors.WHITE}                 🔥 OVERPOWERED EDITION 🔥                  {Colors.CYAN}")
+    print(f"{Colors.YELLOW}                  Telegram: t.me/Antyrx{Colors.RESET}\n")
+
+# ========== PROXY HANDLER ==========
+def get_proxy():
+    if not USE_PROXY or not PROXY_LIST:
+        return None
+    proxy = random.choice(PROXY_LIST)
+    return {'http': proxy, 'https': proxy}
+
+# ========== MAIN REPORT FUNCTION ==========
+def send_report(session, csrf_token, target_id, reason_tag, proxy=None):
+    """Send one report using original hardcoded headers/cookies"""
+    # Hardcoded cookies (original working set)
+    cookies = {
+        'datr': 'OqhFaSvz3896RM699JeDRERS',
+        'ig_did': '24E8448B-DA5C-4392-A68C-6F71FA8DD8FE',
+        'mid': 'aUWoPwAEAAHn-v0cDfeyq7L3OXrg',
+        'ig_nrcb': '1',
+        'ps_l': '1',
+        'ps_n': '1',
+        'csrftoken': csrf_token,
+        'dpr': '3.0234789848327637',
+        'wd': '891x1671',
+    }
+    if session.cookies.get('sessionid'):
+        cookies['sessionid'] = session.cookies.get('sessionid')
+    if session.cookies.get('ds_user_id'):
+        cookies['ds_user_id'] = session.cookies.get('ds_user_id')
+
+    headers = {
+        'authority': 'www.instagram.com',
+        'accept': '*/*',
+        'accept-language': 'en-US,en;q=0.9',
+        'content-type': 'application/x-www-form-urlencoded',
+        'origin': 'https://www.instagram.com',
+        'referer': f'https://www.instagram.com/',
+        'sec-ch-prefers-color-scheme': 'dark',
+        'user-agent': generate_user_agent(),
+        'x-asbd-id': '359341',
+        'x-csrftoken': csrf_token,
+        'x-ig-app-id': '936619743392459',
+        'x-ig-www-claim': 'hmac.AR2ZebPnMV8oF_FGwsM0MVblQPCh470v2aqmAowZOV6WChcz',
+        'x-instagram-ajax': '1031623017',
+        'x-requested-with': 'XMLHttpRequest',
+    }
+
+    # First call: get_frx_prompt
+    first_payload = {
+        'container_module': 'profilePage',
+        'entry_point': '1',
+        'location': '2',
+        'object_id': target_id,
+        'object_type': '5',
+        'context': '{"tags":["ig_report_account"]}',
+        'selected_tag_types': '["ig_its_inappropriate"]',
+        'frx_prompt_request_type': '2',
+        'jazoest': '22669',
+    }
+    try:
+        r1 = session.post(
+            'https://www.instagram.com/api/v1/web/reports/get_frx_prompt/',
+            cookies=cookies,
+            headers=headers,
+            data=first_payload,
+            proxies=proxy,
+            timeout=10
+        )
+        if r1.status_code != 200:
+            return False
+
+        # Second call: actual report
+        final_payload = {
+            'container_module': 'profilePage',
+            'entry_point': '1',
+            'location': '2',
+            'object_id': target_id,
+            'object_type': '5',
+            'context': f'{{"tags":["ig_report_account","ig_its_inappropriate","{reason_tag}"]}}',
+            'selected_tag_types': f'["{reason_tag}"]',
+            'frx_prompt_request_type': '2',
+            'jazoest': '22669',
+        }
+        r2 = session.post(
+            'https://www.instagram.com/api/v1/web/reports/get_frx_prompt/',
+            cookies=cookies,
+            headers=headers,
+            data=final_payload,
+            proxies=proxy,
+            timeout=10
+        )
+        text = r2.text.lower()
+        if '"text":"done"' in text or '"text":"tamam"' in text or '"text":"تم"' in text:
+            return True
+        return False
+    except Exception:
+        return False
+
+# ========== WORKER THREAD ==========
+def worker(report_queue, session, csrf_token, target_id, reason_tag, proxy, stop_event, results):
+    while not stop_event.is_set():
+        try:
+            task = report_queue.get(timeout=0.5)
+        except:
+            continue
+        if task is None:
+            break
+        success = send_report(session, csrf_token, target_id, reason_tag, proxy)
+        if success:
+            results['success'] += 1
+        else:
+            results['fail'] += 1
+        # Minimal delay to avoid immediate IP ban
+        time.sleep(random.uniform(*DELAY_BETWEEN))
+        report_queue.task_done()
+
+# ========== MAIN ==========
+def main():
+    print_banner()
+    username = input(f"{Colors.YELLOW}👤 Your Instagram Username: {Colors.RESET}")
+    password = input(f"{Colors.YELLOW}🔑 Your Password: {Colors.RESET}")
+
+    os.system('clear' if os.name == 'posix' else 'cls')
+    print_banner()
+    print(f"""
+{Colors.WHITE}              📋 REPORT REASONS                         {Colors.CYAN}
+
+{Colors.CYAN}{Colors.WHITE}  [1] Spam or Fraudulent Content                     {Colors.CYAN}
+{Colors.CYAN}{Colors.WHITE}  [2] I just don't like it                            {Colors.CYAN}
+{Colors.CYAN}{Colors.WHITE}  [3] Harassment or unwanted messages                 {Colors.CYAN}
+{Colors.CYAN}{Colors.WHITE}  [4] Suicide, self-harm or eating disorder           {Colors.CYAN}
+{Colors.CYAN}{Colors.WHITE}  [5] Violence, hate speech or abuse                   {Colors.CYAN}
+{Colors.CYAN}{Colors.WHITE}  [6] Sale of illegal / prohibited products           {Colors.CYAN}
+{Colors.CYAN}{Colors.WHITE}  [7] Nudity or sexual content                         {Colors.CYAN}
+{Colors.CYAN}{Colors.WHITE}  [8] Scamming or Fraud                                {Colors.CYAN}
+{Colors.CYAN}{Colors.WHITE}  [9] False information / Misinformation               {Colors.CYAN}
+""")
+    report_reason = int(input(f"{Colors.YELLOW}Report reason number (1-9): {Colors.RESET}"))
+    target_user = input(f"{Colors.YELLOW}Target Username to Report: {Colors.RESET}")
+    total_reports = int(input(f"{Colors.YELLOW}How many reports to send (e.g., 50000): {Colors.RESET}"))
+
+    # Hardcoded initial cookies (original)
+    cookies = {
+        'datr': 'OqhFaSvz3896RM699JeDRERS',
+        'ig_did': '24E8448B-DA5C-4392-A68C-6F71FA8DD8FE',
+        'mid': 'aUWoPwAEAAHn-v0cDfeyq7L3OXrg',
+        'ig_nrcb': '1',
+        'ps_l': '1',
+        'ps_n': '1',
+        'csrftoken': 'a23WoaP6T9yoOfR5b2UpEZkMNTDSx6Qa',
+        'dpr': '3.0234789848327637',
+        'wd': '891x1671',
+    }
+    headers = {
+        'authority': 'www.instagram.com',
+        'accept': '*/*',
+        'accept-language': 'en-US,en;q=0.9',
+        'content-type': 'application/x-www-form-urlencoded',
+        'origin': 'https://www.instagram.com',
+        'referer': 'https://www.instagram.com/',
+        'sec-ch-prefers-color-scheme': 'dark',
+        'sec-ch-ua': '"Chromium";v="137", "Not/A)Brand";v="24"',
+        'sec-ch-ua-full-version-list': '"Chromium";v="137.0.7337.0", "Not/A)Brand";v="24.0.0.0"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-model': '""',
+        'sec-ch-ua-platform': '"Linux"',
+        'sec-ch-ua-platform-version': '""',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        'user-agent': str(generate_user_agent()),
+        'x-asbd-id': '359341',
+        'x-csrftoken': 'a23WoaP6T9yoOfR5b2UpEZkMNTDSx6Qa',
+        'x-ig-app-id': '936619743392459',
+        'x-ig-www-claim': '0',
+        'x-instagram-ajax': '1031623017',
+        'x-requested-with': 'XMLHttpRequest',
+        'x-web-session-id': 'xm1wtf:t1yo2p:xxabri',
+    }
+
+    # Login to get fresh session cookies
+    session = requests.Session()
+    timestamp = str(time.time()).split(".")[0]
+    login_data = {
+        'enc_password': f'#PWD_INSTAGRAM_BROWSER:0:{timestamp}:{password}',
+        'caaF2DebugGroup': '0',
+        'isPrivacyPortalReq': 'false',
+        'loginAttemptSubmissionCount': '0',
+        'optIntoOneTap': 'false',
+        'queryParams': '{}',
+        'trustedDeviceRecords': '{}',
+        'username': username,
+        'jazoest': '22669',
+    }
+    print(f"{Colors.BLUE}⏱ Logging into Instagram...{Colors.RESET}")
+    login_resp = session.post('https://www.instagram.com/api/v1/web/accounts/login/ajax/',
+                              cookies=cookies, headers=headers, data=login_data)
+    if '"user":true' not in login_resp.text or '"authenticated":true' not in login_resp.text:
+        print(f"{Colors.RED}❌ Login Failed: {username}{Colors.RESET}")
+        return
+
+    print(f"{Colors.GREEN}✅ Login Successful: {username}{Colors.RESET}")
+    csrf_token = session.cookies.get('csrftoken')
+    ds_user_id = session.cookies.get('ds_user_id')
+    session_id = session.cookies.get("sessionid")
+
+    # Get target user ID
+    print(f"{Colors.BLUE}🔍 Getting target info: {target_user}{Colors.RESET}")
+    profile_headers = {
+        'authority': 'www.instagram.com',
+        'accept': '*/*',
+        'accept-language': 'en-US,en;q=0.9',
+        'referer': f'https://www.instagram.com/{target_user}/',
+        'sec-ch-prefers-color-scheme': 'dark',
+        'user-agent': str(generate_user_agent()),
+        'x-asbd-id': '359341',
+        'x-csrftoken': csrf_token,
+        'x-ig-app-id': '936619743392459',
+        'x-ig-www-claim': '0',
+        'x-requested-with': 'XMLHttpRequest',
+    }
+    params = {'username': target_user}
+    profile_resp = session.get(
+        'https://www.instagram.com/api/v1/users/web_profile_info/',
+        params=params,
+        cookies=cookies,
+        headers=profile_headers,
+    ).json()
+    target_id = profile_resp['data']['user']['id']
+    print(f"{Colors.GREEN}✅ Target ID: {target_id}{Colors.RESET}")
+
+    reason_tag = {
+        1: "spam", 2: "i_just_dont_like_it", 3: "harassment",
+        4: "self_injury", 5: "hate_speech", 6: "sale_of_regulated_goods",
+        7: "nudity", 8: "scam", 9: "false_information"
+    }.get(report_reason, "spam")
+
+    # Fill queue with report tasks
+    report_queue = threading.Queue()
+    for _ in range(total_reports):
+        report_queue.put(1)
+
+    results = {'success': 0, 'fail': 0}
+    stop_event = threading.Event()
+    proxy = get_proxy()
+
+    print(f"{Colors.CYAN}🔥 Starting {THREADS} threads to send {total_reports} reports...{Colors.RESET}")
+    print(f"{Colors.YELLOW}⚡ Tool by @Antyrx | Telegram: t.me/Antyrx{Colors.RESET}\n")
+
+    start_time = time.time()
+    with ThreadPoolExecutor(max_workers=THREADS) as executor:
+        futures = []
+        for _ in range(THREADS):
+            futures.append(executor.submit(worker, report_queue, session, csrf_token,
+                                           target_id, reason_tag, proxy, stop_event, results))
+        report_queue.join()
+        stop_event.set()
+        for f in futures:
+            f.result()
+
+    elapsed = time.time() - start_time
+    rate = results['success'] / elapsed if elapsed > 0 else 0
+    print(f"\n{Colors.GREEN}✅ All reports sent!{Colors.RESET}")
+    print(f"{Colors.GREEN}📊 Success: {results['success']} | Failed: {results['fail']}{Colors.RESET}")
+    print(f"{Colors.GREEN}⏱ Time: {elapsed:.2f}s | Speed: {rate:.2f} reports/sec{Colors.RESET}")
+    print(f"{Colors.YELLOW}🔰 Powered by @Antyrx | t.me/Antyrx{Colors.RESET}")
+
+if __name__ == "__main__":
+    main()
